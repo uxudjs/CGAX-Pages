@@ -33,3 +33,10 @@ test('页面不包含已确认的无限装饰动画', () => {
 		);
 	}
 });
+
+test('用户模式切换不执行装饰性过场', () => {
+	const source = pages['admin/index.html'];
+	assert.doesNotMatch(source, /mode-transition|USER_MODE_TRANSITION|playUserModeTransition|createExpertMode/);
+	assert.doesNotMatch(source, /void cardContainer\.offsetHeight/);
+	assert.match(source, /\.simple-mode \.advanced-module\s*{[^}]*display:\s*none/s);
+});
