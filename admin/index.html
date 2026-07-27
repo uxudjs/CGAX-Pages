@@ -15123,25 +15123,17 @@
 				const parsedHeading = parseChangelogVersionHeading(section.heading);
 				return {
 					section,
-					parsedHeading,
-					versionNumber: parseVersionNumber(parsedHeading.versionText)
+					parsedHeading
 				};
 			});
 
-			let latestVersionNumberInChangelog = 0;
-			for (const sectionMeta of sectionMetaList) {
-				if (sectionMeta.versionNumber > latestVersionNumberInChangelog) {
-					latestVersionNumberInChangelog = sectionMeta.versionNumber;
-				}
-			}
+			const latestVersionEntryIndex = sectionMetaList.length > 0 ? 0 : -1;
 
-			for (const sectionMeta of sectionMetaList) {
+			for (const [index, sectionMeta] of sectionMetaList.entries()) {
 				versionEntryCount += 1;
-				const { section, parsedHeading, versionNumber } = sectionMeta;
+				const { section, parsedHeading } = sectionMeta;
 				const isCurrent = isCurrentVersionMatched(currentVersionCandidates, parsedHeading.candidates);
-				const isLatest = latestVersionNumberInChangelog > 0
-					? versionNumber === latestVersionNumberInChangelog
-					: versionEntryCount === 1;
+				const isLatest = index === latestVersionEntryIndex;
 
 				if (isCurrent && !currentVersionPosition) {
 					currentVersionPosition = versionEntryCount;

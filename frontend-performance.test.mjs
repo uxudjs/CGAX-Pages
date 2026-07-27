@@ -40,3 +40,10 @@ test('用户模式切换不执行装饰性过场', () => {
 	assert.doesNotMatch(source, /void cardContainer\.offsetHeight/);
 	assert.match(source, /\.simple-mode \.advanced-module\s*{[^}]*display:\s*none/s);
 });
+
+test('更新日志将首个版本条目标记为最新，避免时间戳版本压过语义化版本', () => {
+	const source = pages['admin/index.html'];
+	assert.match(source, /const latestVersionEntryIndex = sectionMetaList\.length > 0 \? 0 : -1;/);
+	assert.match(source, /const isLatest = index === latestVersionEntryIndex;/);
+	assert.doesNotMatch(source, /latestVersionNumberInChangelog/);
+});
