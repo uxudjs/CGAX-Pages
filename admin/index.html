@@ -14011,6 +14011,7 @@
 		const SKIP_VERIFY_WARNING_BYPASS_MIN_VERSION = 20260601154939;
 		let cachedWorkerVersionRawText = '';
 		let cachedLatestOnlineVersion = 0;
+		let cachedLatestOnlineVersionFullText = '';
 		let cachedCurrentVersionNumber = 0;
 		let cachedCurrentVersionFullText = '';
 		let cachedChangelogRawText = '';
@@ -14439,14 +14440,12 @@
 
 			versionBadge.classList.remove('is-latest', 'is-outdated', 'is-preview');
 
-			const rawText = String(version ?? '').trim();
-			const digitsOnly = rawText.replace(/\D/g, '');
-			const text = digitsOnly || rawText;
+			const rawText = String(version ?? '').trim().replace(/^v/i, '');
+			const text = rawText;
 			if (text) {
 				cachedCurrentVersionFullText = text;
 				cachedCurrentVersionNumber = parseVersionNumber(text);
-				const shortText = text.slice(0, 8);
-				versionValue.textContent = "v2.1." + shortText;
+				versionValue.textContent = `v${text}`;
 				versionBadge.dataset.health = '';
 				versionBadge.hidden = false;
 				versionBadge.style.display = 'flex';
@@ -14467,6 +14466,26 @@
 			if (!digits) return 0;
 			const parsed = Number(digits);
 			return Number.isFinite(parsed) ? parsed : 0;
+		}
+
+		function isSemanticVersion(value) {
+			return /^v?\d+\.\d+\.\d+$/i.test(String(value ?? '').trim());
+		}
+
+		function compareVersions(currentVersion, latestVersion) {
+			const current = String(currentVersion ?? '').trim().replace(/^v/i, '');
+			const latest = String(latestVersion ?? '').trim().replace(/^v/i, '');
+			if (isSemanticVersion(current) && isSemanticVersion(latest)) {
+				const currentParts = current.split('.').map(Number);
+				const latestParts = latest.split('.').map(Number);
+				for (let i = 0; i < 3; i++) {
+					if (currentParts[i] !== latestParts[i]) return currentParts[i] - latestParts[i];
+				}
+				return 0;
+			}
+			if (isSemanticVersion(current)) return 1;
+			if (isSemanticVersion(latest)) return -1;
+			return parseVersionNumber(current) - parseVersionNumber(latest);
 		}
 
 		function isProxyProtocolAvailable(protocol) {
@@ -14577,10 +14596,11 @@
 
 		function setHttpsProxyFeatureAvailability(currentVersion) {
 			proxyFeatureAvailabilityInitialized = true;
+			const supportsCurrentFeatures = isSemanticVersion(currentVersion);
 			const versionNumber = parseVersionNumber(currentVersion);
-			httpsProxyFeatureEnabled = versionNumber >= HTTPS_PROXY_MIN_VERSION;
-			turnSstpProxyFeatureEnabled = versionNumber >= TURN_SSTP_PROXY_MIN_VERSION;
-			chainProxyFeatureEnabled = versionNumber >= CHAIN_PROXY_MIN_VERSION;
+			httpsProxyFeatureEnabled = supportsCurrentFeatures || versionNumber >= HTTPS_PROXY_MIN_VERSION;
+			turnSstpProxyFeatureEnabled = supportsCurrentFeatures || versionNumber >= TURN_SSTP_PROXY_MIN_VERSION;
+			chainProxyFeatureEnabled = supportsCurrentFeatures || versionNumber >= CHAIN_PROXY_MIN_VERSION;
 			updateChainProxyButtonVisibility();
 
 			const httpsOption = document.getElementById('httpsProxyOption');
@@ -14686,16 +14706,19 @@
 		async function fetchLatestOnlineVersionNumber() {
 			cachedWorkerVersionRawText = '';
 			cachedLatestOnlineVersion = 0;
+			cachedLatestOnlineVersionFullText = '';
 
 			try {
 				const workerText = await fetchWithAutoMirror(WORKER_VERSION_SOURCE_URL + '?_t=' + Date.now(), 'Worker 主程序');
 				cachedWorkerVersionRawText = workerText;
 
 				const versionMatch = workerText.match(/^\s*const\s+Version\s*=\s*['"]([^'"]+)['"]\s*;?/m);
-				const latestVersion = versionMatch ? parseVersionNumber(versionMatch[1]) : 0;
+				const latestVersionText = versionMatch ? versionMatch[1].replace(/^v/i, '') : '';
+				const latestVersion = parseVersionNumber(latestVersionText);
 				cachedLatestOnlineVersion = latestVersion;
-				console.log(`[Version] 在线最新版本识别: raw="${versionMatch ? versionMatch[1] : ''}", parsed=${latestVersion}`);
-				return latestVersion;
+				cachedLatestOnlineVersionFullText = latestVersionText;
+				console.log(`[Version] 在线最新版本识别: raw="${latestVersionText}", parsed=${latestVersion}`);
+				return latestVersionText;
 			} catch (error) {
 				console.warn('[Version] 在线获取最新版本失败，按 0 处理:', error);
 				cachedLatestOnlineVersion = 0;
@@ -14704,10 +14727,9 @@
 		}
 
 		async function updateVersionBadgeHealthByLatest(currentVersion) {
-			const currentVersionNumber = parseVersionNumber(currentVersion);
-			const latestVersionNumber = await fetchLatestOnlineVersionNumber();
-			const diff = currentVersionNumber - latestVersionNumber;
-			console.log(`[Version] 版本比较: current=${currentVersionNumber}, latest=${latestVersionNumber}, diff=${diff}`);
+			const latestVersion = await fetchLatestOnlineVersionNumber();
+			const diff = compareVersions(currentVersion, latestVersion);
+			console.log(`[Version] 版本比较: current=${currentVersion}, latest=${latestVersion}, diff=${diff}`);
 			setVersionBadgeHealthState(diff);
 		}
 
@@ -14740,7 +14762,7 @@
 						throw new Error('missing Version field');
 					}
 
-					const currentVersion = parseVersionNumber(data.Version);
+					const currentVersion = String(data.Version ?? '').trim().replace(/^v/i, '');
 					console.log(`[Version] 当前版本识别: raw="${data.Version}", parsed=${currentVersion}, attempt=${attempt}/${maxRetries}`);
 					updateVersionBadge(currentVersion);
 					setHttpsProxyFeatureAvailability(currentVersion);
@@ -14778,11 +14800,10 @@
 			if (!versionBadge || !versionValue || !modal || !latestVersionValueEl || !currentVersionValueEl) return;
 			if (versionBadge.hidden || versionBadge.style.display === 'none') return;
 
-			const currentVersionFullText = cachedCurrentVersionFullText || String(versionValue.textContent || '').replace(/^v2\.1\./, '');
-			const currentVersion = parseVersionNumber(currentVersionFullText);
-			const latestVersion = cachedLatestOnlineVersion || 0;
-			latestVersionValueEl.textContent = `v2.1.${latestVersion}`;
-			currentVersionValueEl.textContent = `v2.1.${currentVersionFullText || currentVersion || 0}`;
+			const currentVersionFullText = cachedCurrentVersionFullText || String(versionValue.textContent || '').replace(/^v/i, '');
+			const latestVersion = cachedLatestOnlineVersionFullText || cachedLatestOnlineVersion || 0;
+			latestVersionValueEl.textContent = `v${latestVersion}`;
+			currentVersionValueEl.textContent = `v${currentVersionFullText || 0}`;
 
 			let healthKey = versionBadge.dataset.health || '';
 			if (!healthKey) {
@@ -14913,12 +14934,6 @@
 				}
 			}
 
-			const versionBodyMatch = raw.match(/(?:^|v)2\.1\.(\d+)/i);
-			if (versionBodyMatch && versionBodyMatch[1]) {
-				set.add(versionBodyMatch[1]);
-				set.add(`21${versionBodyMatch[1]}`);
-			}
-
 			return set;
 		}
 
@@ -14947,7 +14962,7 @@
 			const currentVersionInfoEl = document.getElementById('currentVersionInfoValue');
 			const fromInfo = String(currentVersionInfoEl?.textContent || '').trim();
 			if (fromInfo) return fromInfo;
-			if (cachedCurrentVersionFullText) return `v2.1.${cachedCurrentVersionFullText}`;
+			if (cachedCurrentVersionFullText) return `v${cachedCurrentVersionFullText}`;
 			return '';
 		}
 
@@ -16877,7 +16892,7 @@
 
 		function handleSkipVerifyChange(event) {
 			if (event.target.checked) {
-				if (cachedCurrentVersionNumber >= SKIP_VERIFY_WARNING_BYPASS_MIN_VERSION) {
+				if (isSemanticVersion(cachedCurrentVersionFullText) || cachedCurrentVersionNumber >= SKIP_VERIFY_WARNING_BYPASS_MIN_VERSION) {
 					markModified('config');
 					return;
 				}
