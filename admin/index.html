@@ -7883,6 +7883,37 @@
 						</div>
 					</div>
 
+					<div class="form-group">
+						<label>连接竞速与保活</label>
+						<div class="input-wrapper" style="flex-direction: column; align-items: stretch; gap: 10px;">
+							<div class="checkbox-group">
+								<input type="checkbox" id="preloadRaceDial"
+									title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接"
+									onchange="markModified('proxy')">
+								<label for="preloadRaceDial" class="checkbox-label"
+									title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接">启用预加载竞速拨号</label>
+							</div>
+							<div class="form-group" style="margin: 0;">
+								<label for="tcpConcurrentDial">TCP 并发拨号数</label>
+								<input type="number" id="tcpConcurrentDial" min="1" step="1" value="2"
+									title="直连 TCP 的并发拨号数；启用预加载时为候选 IP 上限"
+									onchange="markModified('proxy')">
+							</div>
+							<div class="form-group" style="margin: 0;">
+								<label for="proxyConcurrentDial">反代并发拨号数</label>
+								<input type="number" id="proxyConcurrentDial" min="1" step="1" value="1"
+									title="ProxyIP 地址池每批并发尝试数；不作用于其他代理协议"
+									onchange="markModified('proxy')">
+							</div>
+							<div class="form-group" style="margin: 0;">
+								<label for="keepaliveInterval">连接保活间隔（毫秒）</label>
+								<input type="number" id="keepaliveInterval" min="1000" step="1" value="30000"
+									title="WebSocket 与 gRPC 空闲保活发送间隔，最小 1000 毫秒"
+									onchange="markModified('proxy')">
+							</div>
+						</div>
+					</div>
+
 					<div class="module-footer">
 						<button type="button" class="btn btn-proxyip-help" onclick="showProxyIPHelpModal()"
 							title="了解 ProxyIP 的相关信息">
@@ -14577,6 +14608,15 @@
 
 		function applyProxyConfigToForm() {
 			const socksEnabled = currentConfig.反代?.SOCKS5?.启用;
+			const connectionSettings = currentConfig.连接设置 || {};
+			const readPositiveInteger = (value, fallback, minimum) => {
+				const number = Number(value);
+				return Number.isFinite(number) ? Math.max(minimum, Math.floor(number)) : fallback;
+			};
+			document.getElementById('preloadRaceDial').checked = connectionSettings.预加载竞速拨号 === true;
+			document.getElementById('tcpConcurrentDial').value = readPositiveInteger(connectionSettings.TCP并发拨号数, 2, 1);
+			document.getElementById('proxyConcurrentDial').value = readPositiveInteger(connectionSettings.反代并发拨号数, 1, 1);
+			document.getElementById('keepaliveInterval').value = readPositiveInteger(connectionSettings.连接保活间隔毫秒, 30000, 1000);
 
 			if (!socksEnabled) {
 				setProxyModeSelection('auto');
@@ -17200,6 +17240,13 @@
 
 			const existingReverseProxyConfig = currentConfig.反代 || {};
 			const existingSocks5Config = existingReverseProxyConfig.SOCKS5 || {};
+			const tcpConcurrentDial = Number(document.getElementById('tcpConcurrentDial').value);
+			const proxyConcurrentDial = Number(document.getElementById('proxyConcurrentDial').value);
+			const keepaliveInterval = Number(document.getElementById('keepaliveInterval').value);
+			if (!Number.isInteger(tcpConcurrentDial) || tcpConcurrentDial < 1 || !Number.isInteger(proxyConcurrentDial) || proxyConcurrentDial < 1 || !Number.isInteger(keepaliveInterval) || keepaliveInterval < 1000) {
+				showToast('并发拨号数必须为不小于 1 的整数，保活间隔不得小于 1000 毫秒', 'error');
+				return;
+			}
 			currentConfig.反代 = {
 				...existingReverseProxyConfig,
 				PROXYIP: proxyIP,
@@ -17210,6 +17257,12 @@
 					账号: socksAccount,
 					白名单: existingSocks5Config.白名单
 				}
+			};
+			currentConfig.连接设置 = {
+				预加载竞速拨号: document.getElementById('preloadRaceDial').checked,
+				TCP并发拨号数: tcpConcurrentDial,
+				反代并发拨号数: proxyConcurrentDial,
+				连接保活间隔毫秒: keepaliveInterval
 			};
 
 			await saveConfigToServer('proxy');
