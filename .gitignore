@@ -23,3 +23,9 @@ yarn.lock
 *.swo
 *~
 .idea/
+/work-products/*
+!/work-products/SPEC.md
+!/work-products/plan.md
+!/work-products/todo.md
+!/work-products/tests/
+!/work-products/tests/**

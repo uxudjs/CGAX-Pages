@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const source = readFileSync(new URL('./admin/index.html', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../../admin/index.html', import.meta.url), 'utf8');
 
 test('管理页提供四项连接设置，并保留各自的最小值', () => {
 	assert.match(source, /id="preloadRaceDial"/);
