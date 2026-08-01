@@ -173,6 +173,10 @@ test('连接设置的开关不会被模块通用输入布局拉伸', () => {
 	assert.match(source, /\.connection-settings \.(?:checkbox-group )?input\[type="checkbox"\]\s*\{[\s\S]*?flex:\s*0 0 18px/);
 });
 
+test('连接场景提示标签不会被通用下边距顶高', () => {
+	assert.match(source, /\.connection-settings\s*>\s*\.form-group\s*>\s*\.label-with-hint\s*\{[^}]*margin-bottom:\s*0/);
+});
+
 test('管理页回填、校验并保存连接设置', () => {
 	assert.match(source, /const connectionSettings = currentConfig\.连接设置 \|\| \{\};/);
 	assert.match(source, /currentConfig\.连接设置 = \{/);
