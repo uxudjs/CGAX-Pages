@@ -2600,23 +2600,57 @@
 			max-width: 18px
 		}
 
-		.connection-profile-description {
-			margin: 0;
-			font-size: 13px;
-			line-height: 1.5;
+		.connection-custom-settings {
+			display: grid;
+			gap: 10px
+		}
+
+		.connection-custom-settings[hidden] {
+			display: none
+		}
+
+		.connection-profile-help-modal {
+			max-width: min(560px, calc(100vw - 24px));
+			width: min(95vw, 560px);
+			max-height: calc(100vh - 24px);
+			overflow-y: auto;
+			text-align: left
+		}
+
+		.connection-profile-help-modal h2 {
+			margin: 0 32px 18px 0
+		}
+
+		.connection-profile-help-name {
+			margin: 0 0 8px;
+			font-size: 16px;
+			color: var(--text-primary)
+		}
+
+		.connection-profile-help-description {
+			margin: 0 0 16px;
+			line-height: 1.7;
 			color: var(--text-secondary)
 		}
 
-		.connection-profile-notes {
+		.connection-profile-help-notes {
 			margin: 0;
 			padding-left: 20px;
-			font-size: 12px;
-			line-height: 1.5;
+			font-size: 13px;
+			line-height: 1.7;
 			color: var(--text-secondary)
 		}
 
-		.connection-profile-notes li+li {
-			margin-top: 4px
+		.connection-profile-help-notes li+li {
+			margin-top: 6px
+		}
+
+		@media (max-width: 768px) {
+			.connection-profile-help-modal {
+				max-width: calc(100vw - 16px);
+				width: calc(100vw - 16px);
+				padding: 22px 16px
+			}
 		}
 
 		.grpc-ua-wrapper {
@@ -7913,9 +7947,13 @@
 						<label>连接竞速与保活</label>
 						<div class="input-wrapper connection-settings" style="flex-direction: column; align-items: stretch; gap: 10px;">
 							<div class="form-group" style="margin: 0;">
-								<label for="connectionProfile">使用场景</label>
-								<select id="connectionProfile" aria-describedby="connectionProfileDescription connectionProfileNotes"
-									onchange="handleConnectionProfileChange()">
+								<div class="label-with-hint">
+									<label for="connectionProfile">使用场景</label>
+									<button type="button" id="connectionProfileHelpButton" class="inline-hint-btn"
+										title="查看使用场景说明" aria-label="查看使用场景说明"
+										onclick="showConnectionProfileHelpModal()">!</button>
+								</div>
+								<select id="connectionProfile" onchange="handleConnectionProfileChange()">
 									<option value="balanced">网页/视频（均衡）</option>
 									<option value="long_lived">WS/gRPC 长连接</option>
 									<option value="weak_network">弱网快速建连</option>
@@ -7923,37 +7961,32 @@
 									<option value="custom">自定义</option>
 								</select>
 							</div>
-							<p id="connectionProfileDescription" class="connection-profile-description" aria-live="polite">适合常规网页和视频，与当前默认值一致；这些参数不控制媒体吞吐。</p>
-							<ul id="connectionProfileNotes" class="connection-profile-notes">
-								<li>环境变量存在时优先，可能覆盖此处保存值。</li>
-								<li>设置只影响新建连接，现有长连接需重连。</li>
-								<li>竞速主要影响建连与失败切换，不直接提高视频吞吐。</li>
-								<li>WS/gRPC 长连接预设的保活值不作用于 XHTTP。</li>
-							</ul>
-							<div class="checkbox-group">
-								<input type="checkbox" id="preloadRaceDial"
-									title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接"
-									onchange="handleConnectionSettingChange()">
-								<label for="preloadRaceDial" class="checkbox-label"
-									title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接">启用预加载竞速拨号</label>
-							</div>
-							<div class="form-group" style="margin: 0;">
-								<label for="tcpConcurrentDial">TCP 并发拨号数</label>
-								<input type="number" id="tcpConcurrentDial" min="1" step="1" value="2"
-									title="直连 TCP 的并发拨号数；启用预加载时为候选 IP 上限"
-									onchange="handleConnectionSettingChange()">
-							</div>
-							<div class="form-group" style="margin: 0;">
-								<label for="proxyConcurrentDial">反代并发拨号数</label>
-								<input type="number" id="proxyConcurrentDial" min="1" step="1" value="1"
-									title="ProxyIP 地址池每批并发尝试数；不作用于其他代理协议"
-									onchange="handleConnectionSettingChange()">
-							</div>
-							<div class="form-group" style="margin: 0;">
-								<label for="keepaliveInterval">连接保活间隔（毫秒）</label>
-								<input type="number" id="keepaliveInterval" min="1000" step="1" value="30000"
-									title="WebSocket 与 gRPC 空闲保活发送间隔，最小 1000 毫秒"
-									onchange="handleConnectionSettingChange()">
+							<div id="connectionCustomSettings" class="connection-custom-settings" hidden>
+								<div class="checkbox-group">
+									<input type="checkbox" id="preloadRaceDial"
+										title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接"
+										onchange="handleConnectionSettingChange()">
+									<label for="preloadRaceDial" class="checkbox-label"
+										title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接">启用预加载竞速拨号</label>
+								</div>
+								<div class="form-group" style="margin: 0;">
+									<label for="tcpConcurrentDial">TCP 并发拨号数</label>
+									<input type="number" id="tcpConcurrentDial" min="1" step="1" value="2"
+										title="直连 TCP 的并发拨号数；启用预加载时为候选 IP 上限"
+										onchange="handleConnectionSettingChange()">
+								</div>
+								<div class="form-group" style="margin: 0;">
+									<label for="proxyConcurrentDial">反代并发拨号数</label>
+									<input type="number" id="proxyConcurrentDial" min="1" step="1" value="1"
+										title="ProxyIP 地址池每批并发尝试数；不作用于其他代理协议"
+										onchange="handleConnectionSettingChange()">
+								</div>
+								<div class="form-group" style="margin: 0;">
+									<label for="keepaliveInterval">连接保活间隔（毫秒）</label>
+									<input type="number" id="keepaliveInterval" min="1000" step="1" value="30000"
+										title="WebSocket 与 gRPC 空闲保活发送间隔，最小 1000 毫秒"
+										onchange="handleConnectionSettingChange()">
+								</div>
 							</div>
 						</div>
 					</div>
@@ -13522,6 +13555,24 @@
 		</div>
 	</div>
 
+	<!-- 连接场景说明弹窗 -->
+	<div class="modal-overlay" id="connectionProfileHelpModal" onclick="closeConnectionProfileHelpModal(event)">
+		<div class="modal connection-profile-help-modal" role="dialog" aria-modal="true"
+			aria-labelledby="connectionProfileHelpTitle" onclick="event.stopPropagation()">
+			<button type="button" id="connectionProfileHelpClose" class="modal-close"
+				aria-label="关闭使用场景说明" onclick="closeConnectionProfileHelpModal()">×</button>
+			<h2 id="connectionProfileHelpTitle">使用场景说明</h2>
+			<h3 id="connectionProfileHelpProfileName" class="connection-profile-help-name"></h3>
+			<p id="connectionProfileHelpDescription" class="connection-profile-help-description"></p>
+			<ul class="connection-profile-help-notes">
+				<li>环境变量存在时优先，可能覆盖此处保存值。</li>
+				<li>设置只影响新建连接，现有长连接需重连。</li>
+				<li>竞速主要影响建连与失败切换，不直接提高视频吞吐。</li>
+				<li>WS/gRPC 长连接预设的保活值不作用于 XHTTP。</li>
+			</ul>
+		</div>
+	</div>
+
 	<!-- 订阅鉴权与 UUID 说明弹窗 -->
 	<div class="modal-overlay" id="authTokenHelpModal" onclick="closeAuthTokenHelpModal(event)">
 		<div class="modal auth-help-modal" onclick="event.stopPropagation()">
@@ -14677,16 +14728,14 @@
 			return 'custom';
 		}
 
-		function updateConnectionProfileDescription(profileId) {
-			const description = CONNECTION_PROFILES[profileId]?.description
-				|| '保留当前四项数值，适合需要逐项调优的高级用户。';
-			document.getElementById('connectionProfileDescription').textContent = description;
+		function syncConnectionCustomSettingsVisibility(profileId) {
+			document.getElementById('connectionCustomSettings').hidden = profileId !== 'custom';
 		}
 
 		function syncConnectionProfileSelection() {
 			const profileId = inferConnectionProfile(readConnectionSettingsForm());
 			document.getElementById('connectionProfile').value = profileId;
-			updateConnectionProfileDescription(profileId);
+			syncConnectionCustomSettingsVisibility(profileId);
 		}
 
 		function applyConnectionProfile(profileId) {
@@ -14696,21 +14745,23 @@
 			document.getElementById('tcpConcurrentDial').value = profile.tcpConcurrentDial;
 			document.getElementById('proxyConcurrentDial').value = profile.proxyConcurrentDial;
 			document.getElementById('keepaliveInterval').value = profile.keepaliveInterval;
-			syncConnectionProfileSelection();
+			document.getElementById('connectionProfile').value = profileId;
+			syncConnectionCustomSettingsVisibility(profileId);
 			markModified('proxy');
 		}
 
 		function handleConnectionProfileChange() {
 			const profileId = document.getElementById('connectionProfile').value;
 			if (profileId === 'custom') {
-				updateConnectionProfileDescription(profileId);
+				syncConnectionCustomSettingsVisibility(profileId);
 				return;
 			}
 			applyConnectionProfile(profileId);
 		}
 
 		function handleConnectionSettingChange() {
-			syncConnectionProfileSelection();
+			document.getElementById('connectionProfile').value = 'custom';
+			syncConnectionCustomSettingsVisibility('custom');
 			markModified('proxy');
 		}
 
@@ -17375,7 +17426,6 @@
 			};
 
 			await saveConfigToServer('proxy');
-			syncConnectionProfileSelection();
 		}
 
 		// 加载SubConfig JSON数据
@@ -19213,6 +19263,50 @@
 		function closeECHHelpModal(event) {
 			if (event && event.target.id !== 'echHelpModal') return;
 			document.getElementById('echHelpModal').classList.remove('show');
+		}
+
+		function handleConnectionProfileHelpKeydown(event) {
+			if (event.key === 'Escape') {
+				closeConnectionProfileHelpModal();
+				return;
+			}
+			if (event.key !== 'Tab') return;
+
+			const modal = document.getElementById('connectionProfileHelpModal');
+			const focusableElements = Array.from(modal.querySelectorAll(
+				'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			));
+			if (focusableElements.length === 0) return;
+
+			const first = focusableElements[0];
+			const last = focusableElements[focusableElements.length - 1];
+			if (!focusableElements.includes(document.activeElement)
+				|| (event.shiftKey && document.activeElement === first)
+				|| (!event.shiftKey && document.activeElement === last)) {
+				event.preventDefault();
+				(event.shiftKey ? last : first).focus();
+			}
+		}
+
+		function showConnectionProfileHelpModal() {
+			const profileSelect = document.getElementById('connectionProfile');
+			const profileId = profileSelect.value;
+			const description = CONNECTION_PROFILES[profileId]?.description
+				|| '保留当前四项数值，适合需要逐项调优的高级用户。';
+			document.getElementById('connectionProfileHelpProfileName').textContent
+				= profileSelect.selectedOptions[0]?.textContent || '自定义';
+			document.getElementById('connectionProfileHelpDescription').textContent = description;
+			document.getElementById('connectionProfileHelpModal').classList.add('show');
+			document.removeEventListener('keydown', handleConnectionProfileHelpKeydown);
+			document.addEventListener('keydown', handleConnectionProfileHelpKeydown);
+			document.getElementById('connectionProfileHelpClose').focus();
+		}
+
+		function closeConnectionProfileHelpModal(event) {
+			if (event && event.target.id !== 'connectionProfileHelpModal') return;
+			document.getElementById('connectionProfileHelpModal').classList.remove('show');
+			document.removeEventListener('keydown', handleConnectionProfileHelpKeydown);
+			document.getElementById('connectionProfileHelpButton').focus();
 		}
 
 		function showAuthTokenHelpModal(mode) {
