@@ -10,7 +10,7 @@ const pagePaths = [
 ];
 
 const pages = Object.fromEntries(
-	pagePaths.map(path => [path, readFileSync(new URL(path, import.meta.url), 'utf8')])
+	pagePaths.map(path => [path, readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')])
 );
 
 test('所有前端页面均尊重减少动态效果偏好', () => {

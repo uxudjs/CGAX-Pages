@@ -2600,6 +2600,25 @@
 			max-width: 18px
 		}
 
+		.connection-profile-description {
+			margin: 0;
+			font-size: 13px;
+			line-height: 1.5;
+			color: var(--text-secondary)
+		}
+
+		.connection-profile-notes {
+			margin: 0;
+			padding-left: 20px;
+			font-size: 12px;
+			line-height: 1.5;
+			color: var(--text-secondary)
+		}
+
+		.connection-profile-notes li+li {
+			margin-top: 4px
+		}
+
 		.grpc-ua-wrapper {
 			position: relative;
 			display: block;
@@ -7893,10 +7912,28 @@
 					<div class="form-group">
 						<label>连接竞速与保活</label>
 						<div class="input-wrapper connection-settings" style="flex-direction: column; align-items: stretch; gap: 10px;">
+							<div class="form-group" style="margin: 0;">
+								<label for="connectionProfile">使用场景</label>
+								<select id="connectionProfile" aria-describedby="connectionProfileDescription connectionProfileNotes"
+									onchange="handleConnectionProfileChange()">
+									<option value="balanced">网页/视频（均衡）</option>
+									<option value="long_lived">WS/gRPC 长连接</option>
+									<option value="weak_network">弱网快速建连</option>
+									<option value="resource_saver">节省连接资源</option>
+									<option value="custom">自定义</option>
+								</select>
+							</div>
+							<p id="connectionProfileDescription" class="connection-profile-description" aria-live="polite">适合常规网页和视频，与当前默认值一致；这些参数不控制媒体吞吐。</p>
+							<ul id="connectionProfileNotes" class="connection-profile-notes">
+								<li>环境变量存在时优先，可能覆盖此处保存值。</li>
+								<li>设置只影响新建连接，现有长连接需重连。</li>
+								<li>竞速主要影响建连与失败切换，不直接提高视频吞吐。</li>
+								<li>WS/gRPC 长连接预设的保活值不作用于 XHTTP。</li>
+							</ul>
 							<div class="checkbox-group">
 								<input type="checkbox" id="preloadRaceDial"
 									title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接"
-									onchange="markModified('proxy')">
+									onchange="handleConnectionSettingChange()">
 								<label for="preloadRaceDial" class="checkbox-label"
 									title="直连域名时预先解析 A/AAAA 记录，并对多个 IP 竞速连接；不作用于代理连接">启用预加载竞速拨号</label>
 							</div>
@@ -7904,19 +7941,19 @@
 								<label for="tcpConcurrentDial">TCP 并发拨号数</label>
 								<input type="number" id="tcpConcurrentDial" min="1" step="1" value="2"
 									title="直连 TCP 的并发拨号数；启用预加载时为候选 IP 上限"
-									onchange="markModified('proxy')">
+									onchange="handleConnectionSettingChange()">
 							</div>
 							<div class="form-group" style="margin: 0;">
 								<label for="proxyConcurrentDial">反代并发拨号数</label>
 								<input type="number" id="proxyConcurrentDial" min="1" step="1" value="1"
 									title="ProxyIP 地址池每批并发尝试数；不作用于其他代理协议"
-									onchange="markModified('proxy')">
+									onchange="handleConnectionSettingChange()">
 							</div>
 							<div class="form-group" style="margin: 0;">
 								<label for="keepaliveInterval">连接保活间隔（毫秒）</label>
 								<input type="number" id="keepaliveInterval" min="1000" step="1" value="30000"
 									title="WebSocket 与 gRPC 空闲保活发送间隔，最小 1000 毫秒"
-									onchange="markModified('proxy')">
+									onchange="handleConnectionSettingChange()">
 							</div>
 						</div>
 					</div>
@@ -14057,6 +14094,12 @@
 		let chainProxyFeatureEnabled = false;
 		let proxyFeatureAvailabilityInitialized = false;
 		const PROXY_PROTOCOLS = ['socks5', 'http', 'https', 'turn', 'sstp'];
+		const CONNECTION_PROFILES = Object.freeze({
+			balanced: Object.freeze({ preloadRaceDial: false, tcpConcurrentDial: 2, proxyConcurrentDial: 1, keepaliveInterval: 30000, description: '适合常规网页和视频，与当前默认值一致；这些参数不控制媒体吞吐。' }),
+			long_lived: Object.freeze({ preloadRaceDial: false, tcpConcurrentDial: 2, proxyConcurrentDial: 1, keepaliveInterval: 15000, description: '适合 Codex 等存在较长空闲阶段的 WS/gRPC 连接；XHTTP 不使用此保活间隔。' }),
+			weak_network: Object.freeze({ preloadRaceDial: true, tcpConcurrentDial: 3, proxyConcurrentDial: 2, keepaliveInterval: 30000, description: '以额外 DoH 和连接资源换取域名直连或 ProxyIP 池更快的首连与失败切换。' }),
+			resource_saver: Object.freeze({ preloadRaceDial: false, tcpConcurrentDial: 1, proxyConcurrentDial: 1, keepaliveInterval: 60000, description: '优先节省连接资源，容忍更慢的失败切换与更稀疏的 WS/gRPC 活动。' })
+		});
 
 		function parseForcedLowPerformanceMode() {
 			try {
@@ -14613,6 +14656,64 @@
 			}
 		}
 
+		function readConnectionSettingsForm() {
+			return {
+				preloadRaceDial: document.getElementById('preloadRaceDial').checked,
+				tcpConcurrentDial: Number(document.getElementById('tcpConcurrentDial').value),
+				proxyConcurrentDial: Number(document.getElementById('proxyConcurrentDial').value),
+				keepaliveInterval: Number(document.getElementById('keepaliveInterval').value)
+			};
+		}
+
+		function inferConnectionProfile(settings) {
+			for (const [profileId, profile] of Object.entries(CONNECTION_PROFILES)) {
+				if (profile.preloadRaceDial === settings.preloadRaceDial
+					&& profile.tcpConcurrentDial === settings.tcpConcurrentDial
+					&& profile.proxyConcurrentDial === settings.proxyConcurrentDial
+					&& profile.keepaliveInterval === settings.keepaliveInterval) {
+					return profileId;
+				}
+			}
+			return 'custom';
+		}
+
+		function updateConnectionProfileDescription(profileId) {
+			const description = CONNECTION_PROFILES[profileId]?.description
+				|| '保留当前四项数值，适合需要逐项调优的高级用户。';
+			document.getElementById('connectionProfileDescription').textContent = description;
+		}
+
+		function syncConnectionProfileSelection() {
+			const profileId = inferConnectionProfile(readConnectionSettingsForm());
+			document.getElementById('connectionProfile').value = profileId;
+			updateConnectionProfileDescription(profileId);
+		}
+
+		function applyConnectionProfile(profileId) {
+			const profile = CONNECTION_PROFILES[profileId];
+			if (!profile) return;
+			document.getElementById('preloadRaceDial').checked = profile.preloadRaceDial;
+			document.getElementById('tcpConcurrentDial').value = profile.tcpConcurrentDial;
+			document.getElementById('proxyConcurrentDial').value = profile.proxyConcurrentDial;
+			document.getElementById('keepaliveInterval').value = profile.keepaliveInterval;
+			syncConnectionProfileSelection();
+			markModified('proxy');
+		}
+
+		function handleConnectionProfileChange() {
+			const profileId = document.getElementById('connectionProfile').value;
+			if (profileId === 'custom') {
+				updateConnectionProfileDescription(profileId);
+				return;
+			}
+			applyConnectionProfile(profileId);
+		}
+
+		function handleConnectionSettingChange() {
+			syncConnectionProfileSelection();
+			markModified('proxy');
+		}
+
 		function applyProxyConfigToForm() {
 			const socksEnabled = currentConfig.反代?.SOCKS5?.启用;
 			const connectionSettings = currentConfig.连接设置 || {};
@@ -14624,6 +14725,7 @@
 			document.getElementById('tcpConcurrentDial').value = readPositiveInteger(connectionSettings.TCP并发拨号数, 2, 1);
 			document.getElementById('proxyConcurrentDial').value = readPositiveInteger(connectionSettings.反代并发拨号数, 1, 1);
 			document.getElementById('keepaliveInterval').value = readPositiveInteger(connectionSettings.连接保活间隔毫秒, 30000, 1000);
+			syncConnectionProfileSelection();
 
 			if (!socksEnabled) {
 				setProxyModeSelection('auto');
@@ -17273,6 +17375,7 @@
 			};
 
 			await saveConfigToServer('proxy');
+			syncConnectionProfileSelection();
 		}
 
 		// 加载SubConfig JSON数据
@@ -17462,6 +17565,7 @@
 
 		async function saveConfigToServer(section) {
 			try {
+				const submittedConfig = JSON.parse(JSON.stringify(currentConfig));
 				const response = await fetch('/admin/config.json', {
 					method: 'POST',
 					headers: {
@@ -17470,10 +17574,11 @@
 						'Pragma': 'no-cache',
 						'Expires': '0'
 					},
-					body: JSON.stringify(currentConfig)
+					body: JSON.stringify(submittedConfig)
 				});
 
 				if (!response.ok) throw new Error('保存失败');
+				originalConfig = submittedConfig;
 				showToast('✅ 配置已保存，请更新订阅，才能获取最新节点内容！', 'success');
 				modifiedSections.delete(section);
 				updateButtonStates();
