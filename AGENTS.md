@@ -4,6 +4,8 @@
 
 CGAX-Pages is the static management frontend consumed by the sibling `../CfGfwAX` project. `../CfGfwAX/_worker.js` points `Pages静态页面` at this repository's GitHub Pages deployment and proxies routes such as `/admin` and `/login`. Treat route names and response shapes as a cross-repository contract.
 
+The sibling `../BestCfCdn` project consumes CfGfwAX subscriptions configured through this UI. Treat the SOCKS5 enabled/global controls and WS/gRPC transport selection as a shared contract: changes to those controls, saved field names, or subscription parameters require matching CfGfwAX verification and the focused `BestCfCdn` chain-proxy regression.
+
 - `admin/index.html` contains the main single-file HTML/CSS/JavaScript interface. The other files under `admin/` are static preview fixtures for Worker endpoints.
 - `login/`, `noADMIN/`, and `noKV/` contain standalone state pages. Preserve their existing case-sensitive paths.
 - `data/` and `vendor/` contain pinned upstream assets. Record reviewed replacements and source revisions in `VENDORED.md`.
@@ -16,11 +18,12 @@ There is no package manager or build step; files are deployed as committed.
 ```powershell
 npx --yes serve@14 . --listen 8000
 Get-Content -Raw admin/config.json | ConvertFrom-Json | Out-Null
-node ../CfGfwAX/chain_proxy.test.mjs
+node --test
+node --test ../CfGfwAX/work-products/tests/chain_proxy.test.mjs
 git diff --check
 ```
 
-The first command downloads a one-off static server and opens a local preview at `http://localhost:8000/admin/`; it does not add a project dependency. The PowerShell command checks edited JSON fixtures. Run the sibling Node regression after shared frontend/Worker behavior changes, then use `git diff --check` to catch whitespace errors.
+The first command downloads a one-off static server and opens a local preview at `http://localhost:8000/admin/`; it does not add a project dependency. The PowerShell command checks edited JSON fixtures. `node --test` runs the regressions under `work-products/tests/`. Run the sibling Node regression after shared frontend/Worker behavior changes, then use `git diff --check` to catch whitespace errors.
 
 ## Coding Style & Naming Conventions
 
@@ -28,7 +31,9 @@ Use plain HTML, CSS, and browser JavaScript; do not add a toolchain for isolated
 
 ## Testing Guidelines
 
-No automated frontend suite or coverage threshold exists. Smoke-test every affected route in a browser, inspect the console and network panel, and exercise both success and error states. For API or route changes, compare fetch calls in `admin/index.html` and `login/index.html` with handlers in `../CfGfwAX/_worker.js`. Name any standalone Node regression `*.test.mjs` and keep it focused on the changed behavior.
+Node regressions live under `work-products/tests/`; no coverage threshold is configured. Add the smallest focused `*.test.mjs` regression there and reference repository files with paths relative to the test artifact. Smoke-test every affected route in a browser, inspect the console and network panel, and exercise both success and error states. For API or route changes, compare fetch calls in `admin/index.html` and `login/index.html` with handlers in `../CfGfwAX/_worker.js`.
+
+For changes to SOCKS5 global mode, WS/gRPC selection, or chain-subscription fields, run `$env:PYTHONUTF8='1'; .\.venv\Scripts\python.exe -m unittest discover -s work-products/tests -p test_chain_proxy.py -v` from `../BestCfCdn`. Local tests do not prove the published Pages site, deployed Worker, or a real sing-box chain.
 
 ## Commit & Pull Request Guidelines
 
@@ -36,4 +41,4 @@ Follow the history's Conventional Commit style: `feat:`, `fix:`, `chore:`, or `s
 
 ## Security & Configuration
 
-Fixtures must contain only non-sensitive sample data. Never commit real `ADMIN`, `UUID`, API tokens, cookies, or deployment credentials.
+Fixtures must contain only non-sensitive sample data. Never commit real `ADMIN`, `UUID`, API tokens, cookies, deployment credentials, complete subscription URIs, or subscription tokens.
