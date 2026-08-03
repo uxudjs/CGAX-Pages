@@ -12873,12 +12873,6 @@
 					await Promise.all(workers);
 				}
 
-				async function fetchJson(url, timeout) {
-					const response = await fetchWithTimeout(url, { method: "GET", timeout });
-					if (!response.ok) throw new Error(`HTTP ${response.status}`);
-					return response.json();
-				}
-
 				async function fetchJsonFromFastestEndpoint(endpoints, path, timeout) {
 					const bases = Array.from(new Set((Array.isArray(endpoints) ? endpoints : [endpoints]).filter(Boolean)));
 					if (!bases.length) throw new Error("无可用检测地址");
@@ -16631,121 +16625,6 @@
 			return input;
 		}
 
-		// 处理SOCKS5、HTTP、HTTPS、TURN和SSTP代理地址
-		function processProxyAddress(type) {
-			const proxyAddressFieldMap = {
-				socks5: 'socks5Addr',
-				http: 'httpAddr',
-				https: 'httpsAddr',
-				turn: 'turnAddr',
-				sstp: 'sstpAddr'
-			};
-			const fieldId = proxyAddressFieldMap[type] || 'httpAddr';
-			const input = document.getElementById(fieldId).value.trim();
-			let cleanAddress = '';
-
-			if (input) {
-				cleanAddress = extractProxyAddress(input, type);
-				document.getElementById(fieldId).value = cleanAddress;
-
-				// 如果输入内容包含协议标识，自动切换反代模式并转移内容
-				switchProxyModeByProtocol(input, cleanAddress);
-			}
-
-			markModified('proxy');
-		}
-
-		// 提取代理地址中的纯格式
-		function extractProxyAddress(input, type) {
-			input = input.trim();
-
-			// 移除开头的 "/" 或 "/"
-			if (input.startsWith('/')) {
-				input = input.substring(1).trim();
-			}
-
-			// 检测并移除协议前缀
-			const socks5Prefixes = ['socks5://', 'socks5=', 'socks5://'];
-			const httpPrefixes = ['http://', 'http='];
-			const httpsPrefixes = ['https://', 'https='];
-			const turnPrefixes = ['turn://', 'turn='];
-			const sstpPrefixes = ['sstp://', 'sstp='];
-
-			for (const prefix of socks5Prefixes) {
-				if (input.toLowerCase().startsWith(prefix)) {
-					input = input.substring(prefix.length).trim();
-					break;
-				}
-			}
-
-			for (const prefix of httpPrefixes) {
-				if (input.toLowerCase().startsWith(prefix)) {
-					input = input.substring(prefix.length).trim();
-					break;
-				}
-			}
-
-			for (const prefix of httpsPrefixes) {
-				if (input.toLowerCase().startsWith(prefix)) {
-					input = input.substring(prefix.length).trim();
-					break;
-				}
-			}
-
-			for (const prefix of turnPrefixes) {
-				if (input.toLowerCase().startsWith(prefix)) {
-					input = input.substring(prefix.length).trim();
-					break;
-				}
-			}
-
-			for (const prefix of sstpPrefixes) {
-				if (input.toLowerCase().startsWith(prefix)) {
-					input = input.substring(prefix.length).trim();
-					break;
-				}
-			}
-
-			// 移除末尾的备注（#符号之后的内容）
-			if (input.includes('#')) {
-				input = input.split('#')[0].trim();
-			}
-
-			return input;
-		}
-
-		function setProxyAddressForProtocol(protocol, cleanAddress) {
-			document.getElementById('proxyIP').value = '';
-			PROXY_PROTOCOLS.forEach((item) => {
-				const field = document.getElementById(getProxyAddressFieldId(item));
-				if (field) {
-					field.value = item === protocol ? cleanAddress : '';
-				}
-			});
-		}
-
-		// 根据协议自动切换反代模式
-		function switchProxyModeByProtocol(input, cleanAddress) {
-			const lowerInput = input.toLowerCase();
-			const protocolRules = [
-				{ protocol: 'socks5', markers: ['socks5://', 'socks5='], pathPrefix: '/socks' },
-				{ protocol: 'https', markers: ['https://', 'https='], pathPrefix: '/https' },
-				{ protocol: 'turn', markers: ['turn://', 'turn='], pathPrefix: '/turn' },
-				{ protocol: 'sstp', markers: ['sstp://', 'sstp='], pathPrefix: '/sstp' },
-				{ protocol: 'http', markers: ['http://', 'http='], pathPrefix: '/http' }
-			];
-			const matchedRule = protocolRules.find(({ markers, pathPrefix }) =>
-				markers.some((marker) => lowerInput.includes(marker)) || lowerInput.startsWith(pathPrefix)
-			);
-
-			if (!matchedRule) return;
-
-			const protocol = normalizeProxyProtocol(matchedRule.protocol);
-			setProxyModeSelection(protocol);
-			setProxyAddressForProtocol(protocol, cleanAddress);
-			updateProxyMode(false, false);
-		}
-
 		function updateProxyProtocol(markSectionModified = true) {
 			setProxyModeSelection(getSelectedProxyProtocol());
 			updateProxyMode(markSectionModified);
@@ -17794,12 +17673,6 @@
 					}
 				}
 			});
-		}
-
-		async function refreshConfig() {
-			await loadConfig();
-			const loadTime = currentConfig.加载时间 || '未知';
-			showToast(`配置已刷新 (加载时间: ${loadTime})`, 'success');
 		}
 
 		function resetConfigWithConfirm() {
@@ -22019,11 +21892,6 @@
 			});
 		}
 
-		// 将布尔值转换为 emoji
-		function boolToEmoji(value, trueEmoji = '✅', falseEmoji = '❌') {
-			return value ? trueEmoji : falseEmoji;
-		}
-
 		// 将 IP 类型转换为中文并添加样式
 		function formatIpType(type) {
 			if (!type) return '<span class="ip-type-unknown">未知</span>';
@@ -22036,17 +21904,6 @@
 
 			const typeInfo = typeMap[type.toLowerCase()] || { text: type, class: 'ip-type-unknown' };
 			return `<span class="${typeInfo.class}">${typeInfo.text}</span>`;
-		}
-
-		// 获取威胁等级的样式类
-		function getThreatBadgeClass(score) {
-			if (!score) return 'badge-info';
-
-			const numScore = parseFloat(score);
-			if (numScore < 0.001) return 'badge-success';
-			if (numScore < 0.01) return 'badge-info';
-			if (numScore < 0.1) return 'badge-warning';
-			return 'badge-danger';
 		}
 
 		// 计算综合滥用评分
@@ -22106,67 +21963,6 @@
 
 			const percentage = score * 100;
 			return percentage.toFixed(2) + '%';
-		}
-
-		// 切换评分算法说明气泡
-		function toggleScoreTooltip(helpIcon) {
-			const tooltip = helpIcon.nextElementSibling;
-			const isShowing = tooltip.classList.contains('show');
-
-			// 隐藏所有其他气泡
-			document.querySelectorAll('.score-tooltip.show').forEach(t => {
-				if (t !== tooltip) t.classList.remove('show');
-			});
-
-			// 切换当前气泡
-			tooltip.classList.toggle('show');
-
-			// 如果显示气泡，调整位置并添加点击事件监听器来关闭它
-			if (!isShowing) {
-				setTimeout(() => {
-					positionTooltipNearMouse(tooltip, helpIcon);
-
-					const closeTooltip = (e) => {
-						if (!tooltip.contains(e.target) && !helpIcon.contains(e.target)) {
-							tooltip.classList.remove('show');
-							document.removeEventListener('click', closeTooltip);
-						}
-					};
-					document.addEventListener('click', closeTooltip);
-				}, 100);
-			}
-		}
-
-		// 将气泡位置设置在鼠标附近
-		function positionTooltipNearMouse(tooltip, helpIcon) {
-			const iconRect = helpIcon.getBoundingClientRect();
-			const tooltipWidth = tooltip.offsetWidth;
-			const tooltipHeight = tooltip.offsetHeight;
-			const windowWidth = window.innerWidth;
-			const windowHeight = window.innerHeight;
-			const padding = 10;
-
-			let left = iconRect.right + padding;
-			let top = iconRect.top - tooltipHeight / 2;
-
-			// 如果气泡超出右边界，显示在左边
-			if (left + tooltipWidth > windowWidth - padding) {
-				left = iconRect.left - tooltipWidth - padding;
-			}
-
-			// 如果气泡超出顶部，调整到下方
-			if (top < padding) {
-				top = iconRect.top + padding;
-			}
-
-			// 如果气泡超出底部，调整到上方
-			if (top + tooltipHeight > windowHeight - padding) {
-				top = windowHeight - tooltipHeight - padding;
-			}
-
-			tooltip.style.position = 'fixed';
-			tooltip.style.left = left + 'px';
-			tooltip.style.top = top + 'px';
 		}
 
 		// 显示 IP 详情弹窗
@@ -22641,10 +22437,6 @@
 			closeExploreProxyModal('socks5', event);
 		}
 
-		function loadSocks5List() {
-			loadProxyList('socks5');
-		}
-
 		function buildCountryMap(listData, countryMap) {
 			countryMap = {};
 
@@ -22665,28 +22457,8 @@
 			return countryMap;
 		}
 
-		function populateSocks5RegionSelect() {
-			populateProxyRegionSelect('socks5');
-		}
-
 		function onSocks5RegionChange() {
 			onProxyRegionChange('socks5');
-		}
-
-		function populateSocks5ProxySelect(selectedCountry) {
-			populateProxySelect(selectedCountry, 'socks5ProxySelect', socks5CountryMap, socks5VerificationStatus, 'socks5');
-		}
-
-		function verifySocks5Proxies(proxies) {
-			verifyProxies(proxies, verifySingleSocks5);
-		}
-
-		function verifySingleSocks5(proxy, signal) {
-			return verifySingleProxy(proxy, 'socks5', signal);
-		}
-
-		function updateSocks5Display() {
-			updateProxyDisplay('socks5');
 		}
 
 		function confirmSelectSocks5() {
@@ -23422,33 +23194,8 @@
 			closeExploreProxyModal('http', event);
 		}
 
-		function loadHTTPList() {
-			loadProxyList('http');
-		}
-
-
-		function populateHTTPRegionSelect() {
-			populateProxyRegionSelect('http');
-		}
-
 		function onHTTPRegionChange() {
 			onProxyRegionChange('http');
-		}
-
-		function populateHTTPProxySelect(selectedCountry) {
-			populateProxySelect(selectedCountry, 'httpProxySelect', httpCountryMap, httpVerificationStatus, 'http');
-		}
-
-		function verifyHTTPProxies(proxies) {
-			verifyProxies(proxies, verifySingleHTTP);
-		}
-
-		function verifySingleHTTP(proxy, signal) {
-			return verifySingleProxy(proxy, 'http', signal);
-		}
-
-		function updateHTTPDisplay() {
-			updateProxyDisplay('http');
 		}
 
 		function confirmSelectHTTP() {
@@ -23467,32 +23214,8 @@
 			closeExploreProxyModal('https', event);
 		}
 
-		function loadHTTPSList() {
-			loadProxyList('https');
-		}
-
-		function populateHTTPSRegionSelect() {
-			populateProxyRegionSelect('https');
-		}
-
 		function onHTTPSRegionChange() {
 			onProxyRegionChange('https');
-		}
-
-		function populateHTTPSProxySelect(selectedCountry) {
-			populateProxySelect(selectedCountry, 'httpsProxySelect', httpsCountryMap, httpsVerificationStatus, 'https');
-		}
-
-		function verifyHTTPSProxies(proxies) {
-			verifyProxies(proxies, verifySingleHTTPS);
-		}
-
-		function verifySingleHTTPS(proxy, signal) {
-			return verifySingleProxy(proxy, 'https', signal);
-		}
-
-		function updateHTTPSDisplay() {
-			updateProxyDisplay('https');
 		}
 
 		function confirmSelectHTTPS() {

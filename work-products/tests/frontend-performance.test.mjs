@@ -47,3 +47,8 @@ test('更新日志将首个版本条目标记为最新，避免时间戳版本�
 	assert.match(source, /const isLatest = index === latestVersionEntryIndex;/);
 	assert.doesNotMatch(source, /latestVersionNumberInChangelog/);
 });
+
+test('管理页不保留已删除函数的悬空注释', () => {
+	const source = pages['admin/index.html'];
+	assert.doesNotMatch(source, /将布尔值转换为 emoji|获取威胁等级的样式类|切换评分算法说明气泡/);
+});
