@@ -6115,15 +6115,6 @@
 			z-index: 2100000001;
 		}
 
-		#ssTLSDisableModal {
-			z-index: 2100000000;
-		}
-
-		#ssTLSDisableModal .modal {
-			max-width: 540px;
-			z-index: 2100000001;
-		}
-
 		.grpc-modal-path {
 			margin: 0 0 16px 0;
 			padding: 12px;
@@ -6174,113 +6165,6 @@
 		html.dark-mode .grpc-modal-confirm-btn {
 			background: linear-gradient(135deg, #34d399 0%, #059669 100%);
 			box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-		}
-
-		.sstls-modal-alert {
-			margin: 0 0 12px 0;
-			font-size: 14px;
-			line-height: 1.6;
-			text-align: left;
-			color: #f44336;
-		}
-
-		.sstls-modal-requirements {
-			margin: 0 0 16px 0;
-			padding: 12px;
-			border-radius: 8px;
-			background: #fff5f5;
-			border: 1px solid #ffcdd2;
-			text-align: left;
-			font-size: 13px;
-			line-height: 1.7;
-			color: #b71c1c;
-		}
-
-		.sstls-modal-requirements ol {
-			margin: 8px 0 0 20px;
-			padding: 0;
-		}
-
-		.sstls-modal-requirements li {
-			margin-bottom: 8px;
-		}
-
-		.sstls-modal-requirements li:last-child {
-			margin-bottom: 0;
-		}
-
-		.sstls-modal-path {
-			margin: 8px 0 0 0;
-		}
-
-		.sstls-modal-note {
-			margin: 0 0 12px 0;
-			padding: 12px 14px;
-			border-radius: 10px;
-			background: linear-gradient(180deg, #f8fdff 0%, #eef9ff 100%);
-			border: 1px solid #cfe8ff;
-			text-align: left;
-		}
-
-		.sstls-modal-note-title {
-			margin: 0 0 6px 0;
-			font-size: 13px;
-			font-weight: 700;
-			color: #1d4ed8;
-		}
-
-		.sstls-modal-note p {
-			margin: 0;
-			font-size: 13px;
-			line-height: 1.75;
-			color: #334155;
-		}
-
-		.sstls-modal-note p+p {
-			margin-top: 6px;
-		}
-
-		.sstls-modal-confirm-btn {
-			flex: 1;
-			background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-			color: #fff;
-			box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
-		}
-
-		.sstls-modal-confirm-btn:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 6px 16px rgba(234, 88, 12, 0.45);
-			background: linear-gradient(135deg, #f59e0b 0%, #c2410c 100%);
-		}
-
-		.sstls-modal-confirm-btn:active {
-			transform: translateY(0);
-			box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
-		}
-
-		html.dark-mode .sstls-modal-alert {
-			color: #ff8a80;
-		}
-
-		html.dark-mode .sstls-modal-requirements {
-			background: #4a2424;
-			border-color: #7f1d1d;
-			color: #ffb4ae;
-		}
-
-		html.dark-mode .sstls-modal-note {
-			background: linear-gradient(180deg, rgba(14, 116, 144, 0.22) 0%, rgba(30, 64, 175, 0.18) 100%);
-			border-color: rgba(125, 211, 252, 0.45);
-		}
-
-		html.dark-mode .sstls-modal-note-title,
-		html.dark-mode .sstls-modal-note p {
-			color: #dbeafe;
-		}
-
-		html.dark-mode .sstls-modal-confirm-btn {
-			background: linear-gradient(135deg, #fbbf24 0%, #ea580c 100%);
-			box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
 		}
 
 		.tooltip-header {
@@ -7583,23 +7467,6 @@
 						<label for="protocol">节点协议</label>
 						<select id="protocol" title="节点协议" onchange="updateProtocol(); markModified('config')">
 							<option value="vless">VLESS</option>
-						</select>
-					</div>
-
-					<div class="form-group" id="ssMethodGroup" style="display: none;"
-						title="Shadowsocks 的加密方式，推荐使用 aes-128-gcm 以获得更好的性能和兼容性。">
-						<label for="ssMethod">加密方式</label>
-						<select id="ssMethod" onchange="markModified('config')">
-							<option value="aes-128-gcm">aes-128-gcm（CPU消耗少速度快）</option>
-							<option value="aes-256-gcm">aes-256-gcm（在性能不佳的老设备上，加解密速度会变慢）</option>
-						</select>
-					</div>
-
-					<div class="form-group" id="ssTLSGroup" style="display: none;" title="传输层TLS加密">
-						<label for="ssTLS">TLS</label>
-						<select id="ssTLS" onchange="handleSSTLSChange(event)">
-							<option value="true">启用（开启TLS，速度不会比VLESS更快，因为Shadowsocks自带AEAD加密）</option>
-							<option value="false">关闭</option>
 						</select>
 					</div>
 
@@ -14034,54 +13901,6 @@
 		</div>
 	</div>
 
-	<!-- ssTLS 关闭确认弹窗 -->
-	<div class="modal-overlay" id="ssTLSDisableModal" onclick="closeSSTLSDisableModal(event)">
-		<div class="modal" onclick="event.stopPropagation()">
-			<button type="button" class="modal-close" onclick="cancelDisableSSTLS()">×</button>
-			<div style="text-align: center; padding: 20px 0;">
-				<h2 style="color: #f44336; margin: 0 0 16px 0; font-size: 22px; font-weight: 700;">⚠️ 关闭 TLS传输层加密</h2>
-				<p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.6; text-align: left;">
-					🔒 你正在准备关闭 <strong>Shadowsocks</strong> 的 TLS 传输层加密。为了避免节点失联，请先确认部署环境满足要求。
-				</p>
-				<div class="sstls-modal-requirements">
-					<strong>☁️ 关闭 TLS 前，请确认以下三点：</strong>
-					<ol>
-						<li>项目必须部署在 <strong>Workers</strong>（不是 Pages）。</li>
-						<li>
-							在 Cloudflare 中关闭 “<strong>始终使用 HTTPS</strong>”
-							<div class="grpc-modal-path sstls-modal-path">
-								<svg class="grpc-modal-path-icon" role="presentation" xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 16 16" aria-hidden="true" focusable="false" style="opacity: 0.55;">
-									<path
-										d="M12.39 6.902h-1.193V4.705a3.197 3.197 0 10-6.394 0v2.197H3.61l-.5.5V14l.5.5h8.78l.5-.5V7.402l-.5-.5zM5.803 4.705a2.197 2.197 0 014.394 0v2.197H5.803V4.705zM11.89 13.5H4.11V7.902h7.78V13.5z">
-									</path>
-									<path d="M8 8.95a.965.965 0 00-.43 1.83v1.57h.86v-1.57A.965.965 0 008 8.95z">
-									</path>
-								</svg>
-								<span>SSL/TLS &gt; 边缘证书 &gt; 始终使用 HTTPS &gt; <strong>关闭</strong></span>
-							</div>
-							或 <strong>HOST</strong> 直接使用 <strong>*.workers.dev</strong> 项目分配的域名。
-						</li>
-						<li>
-							使用的优选IP/域名的 端口 必须是 <strong>HTTP</strong> 类型端口，例如：
-							<strong>80、8080、8880、2052、2082、2086、2095</strong>。
-						</li>
-					</ol>
-				</div>
-				<div class="sstls-modal-note">
-					<p class="sstls-modal-note-title">📘 传输与加密说明</p>
-					<p>📡 关闭 TLS 后，数据将以 HTTP 明文形态传输，不再具备 TLS加密 对链路的封装与伪装能力。</p>
-					<p>🔐 但节点仍由 Shadowsocks AEAD（aes-128-gcm / aes-256-gcm）加密，流量数据本身依旧是加密传输。</p>
-					<p>✅ 总结：最终流量会以 <strong>明文的方式</strong> 传输 <strong>加密数据</strong>。</p>
-				</div>
-			</div>
-			<div style="display: flex; gap: 12px; justify-content: center;">
-				<button type="button" class="btn sstls-modal-confirm-btn" onclick="confirmDisableSSTLS()">我准备好了</button>
-				<button type="button" class="btn btn-secondary" onclick="cancelDisableSSTLS()">取消</button>
-			</div>
-		</div>
-	</div>
-
 	<!-- HOSTS 检查提示弹窗 -->
 	<div class="modal-overlay" id="hostsMismatchModal" onclick="closeHostsMismatchModal(event)">
 		<div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
@@ -14120,7 +13939,6 @@
 		let subConfigData = null;
 		let hasMultipleHosts = false; // 标记是否存在多个 HOSTS
 		let isLowPerformanceMode = false;
-		let pendingSSTLSPreviousValue = null;
 		const LOW_PERF_STORAGE_KEY = 'adminLowPerformanceMode';
 		const WORKER_VERSION_SOURCE_URL = 'https://raw.githubusercontent.com/uxudjs/CfGfwAX/main/_worker.js';
 		const PAGES_ZIP_DOWNLOAD_URL = 'https://github.com/uxudjs/CGAX-Pages/archive/refs/heads/main.zip';
@@ -15709,8 +15527,7 @@
 
 			document.getElementById('nodeUUID').value = currentConfig.UUID || '';
 			document.getElementById('nodePATH').value = currentConfig.PATH || '';
-			syncSSProtocolSettingsFromConfig();
-			document.getElementById('protocol').value = currentConfig.协议类型 || 'vless';
+			document.getElementById('protocol').value = 'vless';
 			syncTransportSettingsFromConfig();
 			updateProtocol();
 
@@ -16087,68 +15904,6 @@
 			hideTransportGrpcTooltip();
 		}
 
-		function showSSTLSDisableModal(previousValue) {
-			const modal = document.getElementById('ssTLSDisableModal');
-			if (!modal) return;
-			pendingSSTLSPreviousValue = previousValue;
-			modal.classList.add('show');
-		}
-
-		function hideSSTLSDisableModal() {
-			const modal = document.getElementById('ssTLSDisableModal');
-			if (!modal) return;
-			modal.classList.remove('show');
-		}
-
-		function closeSSTLSDisableModal(event) {
-			if (event && event.target && event.target.id !== 'ssTLSDisableModal') {
-				return;
-			}
-			cancelDisableSSTLS();
-		}
-
-		function confirmDisableSSTLS() {
-			const ssTLSSelect = document.getElementById('ssTLS');
-			if (!ssTLSSelect) return;
-
-			ssTLSSelect.value = 'false';
-			ssTLSSelect.dataset.confirmedValue = 'false';
-			pendingSSTLSPreviousValue = null;
-			hideSSTLSDisableModal();
-			updateProtocol();
-			markModified('config');
-		}
-
-		function cancelDisableSSTLS() {
-			const ssTLSSelect = document.getElementById('ssTLS');
-			if (ssTLSSelect) {
-				const restoredValue = pendingSSTLSPreviousValue || ssTLSSelect.dataset.confirmedValue || 'true';
-				ssTLSSelect.value = restoredValue;
-				ssTLSSelect.dataset.confirmedValue = restoredValue;
-			}
-			pendingSSTLSPreviousValue = null;
-			hideSSTLSDisableModal();
-			updateProtocol();
-		}
-
-		function handleSSTLSChange(event) {
-			const ssTLSSelect = document.getElementById('ssTLS');
-			if (!ssTLSSelect) return;
-
-			const nextValue = ssTLSSelect.value;
-			const previousValue = ssTLSSelect.dataset.confirmedValue || 'true';
-			const shouldConfirmDisable = nextValue === 'false' && previousValue !== 'false' && (!event || event.isTrusted);
-
-			if (shouldConfirmDisable) {
-				showSSTLSDisableModal(previousValue);
-				return;
-			}
-
-			ssTLSSelect.dataset.confirmedValue = nextValue;
-			updateProtocol();
-			markModified('config');
-		}
-
 		function updateTransportGrpcTooltipVisibility(showWhenSupportedTransport = false) {
 			const transportSelect = document.getElementById('transport');
 			if (!transportSelect) return;
@@ -16165,8 +15920,7 @@
 		function handleTransportChange() {
 			updateGrpcModeVisibility();
 			updateTransportGrpcTooltipVisibility(true);
-			const protocolSelect = document.getElementById('protocol');
-			updateProtocolOptionAvailability(protocolSelect ? protocolSelect.value : '');
+			updateProtocolOptionAvailability();
 			markModified('config');
 		}
 
@@ -16219,138 +15973,23 @@
 			updateTransportGrpcTooltipVisibility(false);
 		}
 
-		function syncSSProtocolSettingsFromConfig() {
-			const protocolSelect = document.getElementById('protocol');
-			const ssMethodSelect = document.getElementById('ssMethod');
-			const ssTLSSelect = document.getElementById('ssTLS');
-			if (!protocolSelect || !ssMethodSelect || !ssTLSSelect) return;
-
-			const hasSSConfig = !!(currentConfig && currentConfig.SS && typeof currentConfig.SS === 'object');
-			const ssOption = protocolSelect.querySelector('option[value="ss"]');
-			const ssMethodKey = '\u52a0\u5bc6\u65b9\u5f0f';
-
-			if (hasSSConfig) {
-				if (!ssOption) {
-					const option = document.createElement('option');
-					option.value = 'ss';
-					option.textContent = 'Shadowsocks';
-					protocolSelect.appendChild(option);
-				}
-
-				const savedMethod = currentConfig.SS[ssMethodKey];
-				ssMethodSelect.value = savedMethod || 'aes-128-gcm';
-				if (!ssMethodSelect.value) {
-					ssMethodSelect.value = 'aes-128-gcm';
-				}
-
-				ssTLSSelect.value = currentConfig.SS.TLS ? 'true' : 'false';
-				ssTLSSelect.dataset.confirmedValue = ssTLSSelect.value;
-				return;
-			}
-
-			if (ssOption) {
-				ssOption.remove();
-			}
-			if (protocolSelect.value === 'ss') {
-				protocolSelect.value = 'vless';
-			}
-
-			ssMethodSelect.value = 'aes-128-gcm';
-			ssTLSSelect.value = 'false';
-			ssTLSSelect.dataset.confirmedValue = ssTLSSelect.value;
-		}
-
-		function updateSpecifiedPortLabelsByProtocol(protocol) {
-			const specifiedPortSelect = document.getElementById('specifiedPort');
-			if (!specifiedPortSelect) return;
-			const ssTLSSelect = document.getElementById('ssTLS');
-
-			const defaultLabels = {
-				'-1': '随机端口',
-				'443': '443',
-				'2053': '2053',
-				'2083': '2083',
-				'2087': '2087',
-				'2096': '2096',
-				'8443': '8443'
-			};
-
-			const shadowsocksLabels = {
-				'-1': '随机端口',
-				'443': '80',
-				'2053': '2052',
-				'2083': '2082',
-				'2087': '2086',
-				'2096': '2095',
-				'8443': '8080'
-			};
-
-			const useShadowsocksNoTLSLabels = protocol === 'ss' && ssTLSSelect && ssTLSSelect.value === 'false';
-			const labelMap = useShadowsocksNoTLSLabels ? shadowsocksLabels : defaultLabels;
-			Array.from(specifiedPortSelect.options).forEach((option) => {
-				const nextLabel = labelMap[option.value];
-				if (nextLabel !== undefined) {
-					option.textContent = nextLabel;
-				}
-			});
-		}
-
-		function updateProtocolOptionAvailability(protocol) {
-			const ssTLSSelect = document.getElementById('ssTLS');
+		function updateProtocolOptionAvailability() {
 			const transportSelect = document.getElementById('transport');
 			const enable0RTT = document.getElementById('enable0RTT');
-			const skipVerify = document.getElementById('skipVerify');
-			const tlsFragmentShadowrocket = document.getElementById('tlsFragmentShadowrocket');
-			const tlsFragmentHapp = document.getElementById('tlsFragmentHapp');
-
-			const isShadowsocks = protocol === 'ss';
-			const isShadowsocksNoTLS = isShadowsocks && ssTLSSelect && ssTLSSelect.value === 'false';
 			const isGrpcTransport = !!(transportSelect && transportSelect.value === 'grpc');
-			const shouldDisable0RTT = isShadowsocks || isGrpcTransport;
 
 			if (enable0RTT) {
-				enable0RTT.disabled = shouldDisable0RTT;
-				if (shouldDisable0RTT && enable0RTT.checked) {
+				enable0RTT.disabled = isGrpcTransport;
+				if (isGrpcTransport && enable0RTT.checked) {
 					enable0RTT.checked = false;
 				}
 			}
-
-			[tlsFragmentShadowrocket, tlsFragmentHapp].forEach((checkbox) => {
-				if (checkbox) {
-					checkbox.disabled = isShadowsocksNoTLS;
-					if (isShadowsocksNoTLS && checkbox.checked) {
-						checkbox.checked = false;
-					}
-				}
-			});
 		}
 
 		function updateProtocol() {
-			const protocolSelect = document.getElementById('protocol');
-			const ssMethodGroup = document.getElementById('ssMethodGroup');
-			const ssTLSGroup = document.getElementById('ssTLSGroup');
-			if (!protocolSelect || !ssMethodGroup || !ssTLSGroup) return;
-
-			const hasSSConfig = !!(currentConfig && currentConfig.SS && typeof currentConfig.SS === 'object');
-			const showSSFields = hasSSConfig && protocolSelect.value === 'ss';
-			ssMethodGroup.style.display = showSSFields ? '' : 'none';
-			ssTLSGroup.style.display = showSSFields ? '' : 'none';
-
-			const protocol = protocolSelect.value;
-			updateSpecifiedPortLabelsByProtocol(protocol);
-			updateProtocolOptionAvailability(protocol);
-			const transport = document.getElementById('transport');
-			if (transport) {
-				const shouldLockTransport = protocol === 'ss';
-				if (shouldLockTransport) {
-					transport.value = 'ws';
-				}
-				transport.disabled = shouldLockTransport;
-				updateGrpcModeVisibility();
-				updateTransportGrpcTooltipVisibility(false);
-			}
-
-			// 协议/TLS 变化会影响 ECH 可用性
+			updateProtocolOptionAvailability();
+			updateGrpcModeVisibility();
+			updateTransportGrpcTooltipVisibility(false);
 			updateECHOptionState();
 		}
 
@@ -16384,14 +16023,10 @@
 		function updateECHOptionState() {
 			const fingerprint = document.getElementById('fingerprint')?.value;
 			const enableECHCheckbox = document.getElementById('enableECH');
-			const protocol = document.getElementById('protocol')?.value;
-			const ssTLS = document.getElementById('ssTLS')?.value;
-
 			// 支持ECH的指纹类型
 			const supportECH = ['chrome', 'firefox'];
 			const isFingerprintSupported = supportECH.includes(fingerprint);
-			const isSSWithoutTLS = protocol === 'ss' && ssTLS === 'false';
-			const shouldDisableECH = !isFingerprintSupported || isSSWithoutTLS;
+			const shouldDisableECH = !isFingerprintSupported;
 
 			if (enableECHCheckbox) {
 				// 当不满足条件时，自动取消勾选
@@ -16400,7 +16035,7 @@
 					markModified('ech');
 				}
 
-				// SS + TLS关闭 或 指纹不支持时，ECH启用不可编辑
+				// 指纹不支持时，ECH启用不可编辑
 				enableECHCheckbox.disabled = shouldDisableECH;
 			}
 		}
@@ -17118,14 +16753,7 @@
 
 		async function saveConfig() {
 			currentConfig.优选订阅生成.SUBNAME = document.getElementById('subName').value;
-			currentConfig.协议类型 = document.getElementById('protocol').value;
-			const ssMethodSelect = document.getElementById('ssMethod');
-			const ssTLSSelect = document.getElementById('ssTLS');
-			if (currentConfig.SS && typeof currentConfig.SS === 'object' && ssMethodSelect && ssTLSSelect) {
-				const ssMethodKey = '\u52a0\u5bc6\u65b9\u5f0f';
-				currentConfig.SS[ssMethodKey] = ssMethodSelect.value || 'aes-128-gcm';
-				currentConfig.SS.TLS = ssTLSSelect.value === 'true';
-			}
+			currentConfig.协议类型 = 'vless';
 			if (currentConfig['gRPC模式'] !== undefined) {
 				currentConfig['传输协议'] = document.getElementById('transport').value;
 				currentConfig['gRPC模式'] = document.getElementById('grpcMode').value || 'gun';
@@ -17547,8 +17175,7 @@
 				document.getElementById('nodeHost').value = currentConfig.HOST || '';
 				document.getElementById('nodeUUID').value = currentConfig.UUID || '';
 				document.getElementById('nodePATH').value = currentConfig.PATH || '';
-				syncSSProtocolSettingsFromConfig();
-				document.getElementById('protocol').value = currentConfig.协议类型 || 'vless';
+				document.getElementById('protocol').value = 'vless';
 				syncTransportSettingsFromConfig();
 				document.getElementById('skipVerify').checked = currentConfig.跳过证书验证 || false;
 
@@ -20129,8 +19756,7 @@
 					document.getElementById('nodeHost').value = currentConfig.HOST || '';
 					document.getElementById('nodeUUID').value = currentConfig.UUID || '';
 					document.getElementById('nodePATH').value = currentConfig.PATH || '';
-					syncSSProtocolSettingsFromConfig();
-					document.getElementById('protocol').value = currentConfig.协议类型 || 'vless';
+					document.getElementById('protocol').value = 'vless';
 					syncTransportSettingsFromConfig();
 					document.getElementById('skipVerify').checked = currentConfig.跳过证书验证 || false;
 					updateProtocol();
